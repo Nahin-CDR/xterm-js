@@ -1,0 +1,22 @@
+version: '3'
+
+services:
+  frontend:
+    image: ubuntu:latest
+    command: /bin/bash -c "apt-get update && apt-get install -y npm nodejs git && git clone https://github.com/xtermjs/xterm.js.git && cd xterm.js && npm install && npm run build && npm run browser"
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./xterm.js:/xterm.js
+    depends_on:
+      - backend
+
+  backend:
+    image: golang:latest
+    command: go run main.go
+    ports:
+      - "8081:8081"
+    volumes:
+      - ./backend:/go/src/app
+    environment:
+      - GO111MODULE=on

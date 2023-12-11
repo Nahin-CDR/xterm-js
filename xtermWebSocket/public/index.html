@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Terminal</title>
+    <!-- Include xterm.js library -->
+    <script src="https://unpkg.com/xterm@4.14.0/dist/xterm.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/xterm@4.14.0/dist/xterm.css" />
+</head>
+<body>
+    <div id="terminal"></div>
+
+    <script>
+        // Connect to the WebSocket server
+        
+        const socket = new WebSocket("ws://localhost:8080/ws");
+        console.log(socket)
+        // Initialize xterm.js
+        const term = new Terminal();
+        term.open(document.getElementById("terminal"));
+
+        // Attach xterm.js to the WebSocket
+        socket.addEventListener("open", (event) => {
+            term.write('Connected to WebSocket\n');
+
+            term.onData((data) => {
+                // Send data to the WebSocket server
+                socket.send(data);
+            });
+
+            socket.addEventListener("message", (event) => {
+                // Receive data from the WebSocket server and write it to the terminal
+                term.write(event.data);
+            });
+
+            socket.addEventListener("close", (event) => {
+                term.write('Connection closed\n');
+            });
+
+            socket.addEventListener("error", (event) => {
+                term.write('WebSocket error\n');
+            });
+        });
+    </script>
+</body>
+</html>
