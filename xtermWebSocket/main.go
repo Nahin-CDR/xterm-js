@@ -1,4 +1,3 @@
-// main.go
 package main
 
 import (
@@ -9,45 +8,56 @@ import (
 )
 
 var upgrader = websocket.Upgrader{
-	WriteBufferSize: 1024,
 	ReadBufferSize:  1024,
-	CheckOrigin: func(r *http.Request) bool {
-		return true
-	},
+	WriteBufferSize: 1024,
+	CheckOrigin:     func(r *http.Request) bool { return true },
 }
 
-func handleWebSocket(w http.ResponseWriter, r *http.Request) {
-	connection, err := upgrader.Upgrade(w, r, nil)
+func handleRequest(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+
 	if err != nil {
 		fmt.Println(err)
-		return
 	}
-	defer connection.Close()
+
+	defer conn.Close()
 
 	for {
-		messageType, p, err := connection.ReadMessage()
+		messageType, p, err := conn.ReadMessage()
 		if err != nil {
 			fmt.Println(err)
 			return
 		}
 
-		if p != nil {
-			fmt.Println(p)
-			fmt.Println("Request received !")
+		switch string(p) {
+
+		case "create":
+			err = conn.WriteMessage(messageType, []byte("Create request received"))
+		case "update":
+			err = conn.WriteMessage(messageType, []byte("Update request received"))
+		case "delete":
+			err = conn.WriteMessage(messageType, []byte("Delete request received"))
+		default:
+			err = conn.WriteMessage(messageType, []byte("Unknown request"))
 		}
 
-		if err := connection.WriteMessage(messageType, p); err != nil {
+		if err != nil {
 			fmt.Println(err)
 			return
 		}
 	}
 }
+func greet(w http.ResponseWriter, r *http.Request) {
+	fmt.Fprint(w, "\n=====\n")
+	fmt.Fprint(w, "0k")
+}
 
 func main() {
-	http.HandleFunc("/ws", handleWebSocket)
-
-	fmt.Println("WebSocket server running on :8080...")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	http.HandleFunc("/", greet)
+	http.HandleFunc("/server", handleRequest)
+	fmt.Println("Server started at port 8080")
+	err := http.ListenAndServe(":8080", nil)
+	if err != nil {
 		fmt.Println(err)
 	}
 }
